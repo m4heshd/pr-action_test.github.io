@@ -1,0 +1,47 @@
+name: test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pr-test:
+    strategy:
+      matrix:
+        type:
+          - HTTPS
+          - SSH
+    name: ${{ matrix.type }} checkout
+    runs-on: ubuntu-latest
+    env:
+      NEW_BRANCH: test-branch-${{ github.run_id }}-${{ matrix.type }}
+    steps:
+      - if: matrix.type == 'SSH'
+        name: Checkout repo using SSH
+        uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.SSH_KEY }}
+          fetch-depth: 0
+      - if: matrix.type == 'HTTPS'
+        name: Checkout repo using HTTPS
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Create new branch
+        run: git checkout -b ${{ env.NEW_BRANCH }}
+      - name: Create test file
+        run: touch test-file.txt
+      - name: Push new branch
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Create test file
+          branch: ${{ env.NEW_BRANCH }}
+      - name: Check repo URL
+        run: git remote get-url origin
+      - name: Create pull request
+        uses: m4heshd/pull-request@ssh-clone-fix
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: ${{ env.NEW_BRANCH }}
+          destination_branch: main
+          pr_title: Test PR ${{ github.run_id }} (Cloned using ${{ matrix.type }})
+          pr_body: Automated test PR `${{ github.run_id }}`.
