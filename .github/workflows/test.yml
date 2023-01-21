@@ -38,7 +38,7 @@ jobs:
       - name: Check repo URL
         run: git remote get-url origin
       - name: Create pull request
-        uses: m4heshd/pull-request@ssh-clone-fix
+        uses: m4heshd/pull-request@special-char-fix
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_branch: ${{ env.NEW_BRANCH }}
